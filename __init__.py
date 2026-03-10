@@ -1,9 +1,6 @@
 import random
 
 NODE_CATEGORY = "list-filter"
-# TODO
-# - Add pyproject.toml
-#   - see https://docs.comfy.org/registry/overview
 
 class StringToIndex:
   @classmethod
@@ -24,7 +21,20 @@ class StringToIndex:
   DESCRIPTION = "Splits a string into a list of indices based on the provided delimiter."
 
   def run(self, string, delimiter):
-    return ([int(i) for i in string.split(delimiter)],)
+    # Fix for cases where input might be non-string (e.g. boolean True from empty logic nodes)
+    if not isinstance(string, str):
+        print(f"[list-filter] Warning: Expected string but got {type(string)}. Returning empty list.")
+        return ([],)
+    
+    if not string.strip():
+        return ([],)
+
+    try:
+        # Split and convert to int, filtering out empty segments
+        return ([int(i) for i in string.split(delimiter) if i.strip()],)
+    except ValueError as e:
+        print(f"[list-filter] Error: Could not convert part of string to integer: {e}")
+        return ([],)
 
 class FilterStringListByIndexList:
     @classmethod
@@ -75,6 +85,48 @@ class FilterImageListByIndexList:
         if not filtered_list and return_first_if_none_bool:
             filtered_list = [image_list[0]] if image_list else []
         return (filtered_list,)
+
+class FilterAudioListByIndexList:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "audio_list": ("AUDIO", {"tooltip": "The list of audio to be filtered."}),
+                "index_list": ("INT", {"default": 0, "tooltip": "The list of indices to filter the audio list."}),
+            }
+        }
+
+    RETURN_TYPES = ("AUDIO",)
+    RETURN_NAMES = ("audio_list",)
+    FUNCTION = "run"
+    CATEGORY = NODE_CATEGORY
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True,)
+    DESCRIPTION = "Filters the audio list based on the provided index list."
+
+    def run(self, audio_list, index_list):
+        return ([audio_list[i] for i in index_list if i < len(audio_list)],)
+
+class FilterAnyListByIndexList:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "any_list": ("*", {"tooltip": "Any list of data to be filtered."}),
+                "index_list": ("INT", {"default": 0, "tooltip": "The list of indices to filter the list."}),
+            }
+        }
+
+    RETURN_TYPES = ("*",)
+    RETURN_NAMES = ("filtered_list",)
+    FUNCTION = "run"
+    CATEGORY = NODE_CATEGORY
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True,)
+    DESCRIPTION = "Filters ANY list of data based on the provided index list."
+
+    def run(self, any_list, index_list):
+        return ([any_list[i] for i in index_list if i < len(any_list)],)
 
 class FindAnyStrings:
     @classmethod
@@ -176,6 +228,8 @@ NODE_CLASS_MAPPINGS = {
     "list_filter_StringToIndex": StringToIndex,
     "list_filter_FilterStringListByIndexList": FilterStringListByIndexList,
     "list_filter_FilterImageListByIndexList": FilterImageListByIndexList,
+    "list_filter_FilterAudioListByIndexList": FilterAudioListByIndexList,
+    "list_filter_FilterAnyListByIndexList": FilterAnyListByIndexList,
     "list_filter_FindAnyStrings": FindAnyStrings,
     "list_filter_FindNotAnyStrings": FindNotAnyStrings,
     "random_normal_dist": RandomNormalDist,
@@ -183,8 +237,10 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "list_filter_StringToIndex": "Index List From String",
-    "list_filter_FilterStringListByIndexList": "Filter String List",
-    "list_filter_FilterImageListByIndexList": "Filter Image List",
+    "list_filter_FilterStringList": "Filter String List",
+    "list_filter_FilterImageList": "Filter Image List",
+    "list_filter_FilterAudioList": "Filter Audio List",
+    "list_filter_FilterAnyList": "Filter Any List",
     "list_filter_FindAnyStrings": "Find Any Strings",
     "list_filter_FindNotAnyStrings": "Find Not Any Strings",
     "random_normal_dist": "Random Normal Distribution",
