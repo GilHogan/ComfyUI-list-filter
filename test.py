@@ -1,6 +1,8 @@
 import unittest
+import tempfile
+import os
 from unittest.mock import patch
-from __init__ import FindAnyStrings, FindNotAnyStrings, RandomNormalDist, FilterStringListByIndexList, StringToIndex
+from __init__ import FindAnyStrings, FindNotAnyStrings, RandomNormalDist, FilterStringListByIndexList, StringToIndex, GetVideoPathListFromDir
 
 class TestStringToIndex(unittest.TestCase):
     def test_run_with_comma_delimiter(self):
@@ -52,6 +54,33 @@ class TestFilterStringListByIndexList(unittest.TestCase):
         result_filtered_list = filter_string_list_by_index_list.run(string_list, index_list)
 
         self.assertEqual(result_filtered_list, (expected_filtered_list,))
+
+class TestGetVideoPathListFromDir(unittest.TestCase):
+    def test_run(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create dummy video files and non-video file
+            files = ["2_video.mp4", "1_video.avi", "3_video.mov", "ignore.txt"]
+            for f in files:
+                open(os.path.join(tmpdir, f), 'w').close()
+
+            node = GetVideoPathListFromDir()
+
+            # Test basic listing and sorting (Numerical ASC)
+            paths, = node.run(directory=[tmpdir], sort_method=["Numerical (ASC)"])
+            expected = [
+                os.path.join(tmpdir, "1_video.avi"),
+                os.path.join(tmpdir, "2_video.mp4"),
+                os.path.join(tmpdir, "3_video.mov")
+            ]
+            self.assertEqual(paths, expected)
+
+            # Test index filtering
+            paths_filtered, = node.run(directory=[tmpdir], sort_method=["Numerical (ASC)"], index_list=[0, 2])
+            expected_filtered = [
+                os.path.join(tmpdir, "1_video.avi"),
+                os.path.join(tmpdir, "3_video.mov")
+            ]
+            self.assertEqual(paths_filtered, expected_filtered)
 
 class TestFindAnyStrings(unittest.TestCase):
     def test_run(self):

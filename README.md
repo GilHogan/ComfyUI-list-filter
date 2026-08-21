@@ -15,6 +15,8 @@ More generally, ComfyUI-list-filter provides convenient nodes for filtering list
 The sample workflow is in the [example](./example/) directory.
 
 ## Custom nodes
+- `Load Video List From Dir` - Loads video frames as images and returns video file paths from a directory.
+- `Get Video Path List From Dir` - Gets video file paths from a directory without processing video frames.
 - `Index List From String` - Splits a string into a list of indices based on the provided delimiter.
 - `Filter String List` - Filters the string list based on the provided index list.
 - `Filter Image List` - Filters the image list based on the provided index list.
